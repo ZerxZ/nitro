@@ -65,49 +65,52 @@ export function handlers(nitro: Nitro) {
 
         const code = /* js */ `
 ${imports
-  .map((handler) => `import ${getImportId(handler)} from '${handler}';`)
-  .join("\n")}
+            .map((handler) => `import ${getImportId(handler)} from '${handler}';`)
+            .join("\n")}
 
 ${lazyImports
-  .map(
-    (handler) =>
-      `const ${getImportId(handler, true)} = () => import('${handler}');`
-  )
-  .join("\n")}
+            .map(
+              (handler) =>
+                `const ${getImportId(handler, true)} = () => import('${handler}');`
+            )
+            .join("\n")}
 
 export const handlers = [
 ${handlers
-  .map(
-    (h) =>
-      `  { route: '${h.route || ""}', handler: ${getImportId(
-        h.handler,
-        h.lazy
-      )}, lazy: ${!!h.lazy}, middleware: ${!!h.middleware}, method: ${JSON.stringify(
-        h.method?.toLowerCase()
-      )} }`
-  )
-  .join(",\n")}
+            .map(
+              (h) =>
+                `  { route: '${h.route || ""}', handler: ${getImportId(
+                  h.handler,
+                  h.lazy
+                )}, lazy: ${!!h.lazy}, middleware: ${!!h.middleware}, method: ${JSON.stringify(
+                  h.method?.toLowerCase()
+                )} }`
+            )
+            .join(",\n")}
 ];
   `.trim();
         return code;
       },
       "#nitro-internal-virtual/server-handlers-meta": () => {
         const handlers = getHandlers();
+        const imports = unique(
+          handlers.map((h) => h.handler)
+        );
         return /* js */ `
-  ${handlers
-    .map(
-      (h) => `import ${getImportId(h.handler)}Meta from "${h.handler}?meta";`
-    )
-    .join("\n")}
+  ${imports
+            .map(
+              (handler) => `import ${getImportId(handler)}Meta from "${handler}?meta";`
+            )
+            .join("\n")}
 export const handlersMeta = [
   ${handlers
-    .map(
-      (h) =>
+            .map(
+              (h) =>
         /* js */ `{ route: ${JSON.stringify(h.route)}, method: ${JSON.stringify(
-          h.method?.toLowerCase()
-        )}, meta: ${getImportId(h.handler)}Meta }`
-    )
-    .join(",\n")}
+                h.method?.toLowerCase()
+              )}, meta: ${getImportId(h.handler)}Meta }`
+            )
+            .join(",\n")}
   ];
         `;
       },
